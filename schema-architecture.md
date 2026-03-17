@@ -1,6 +1,6 @@
 # 🏥 Application Architecture
 
-## 📌 Section 1: Architecture Summary
+## Architecture Summary
 
 This Spring Boot application follows a layered architecture that combines both *MVC (Model-View-Controller)* and *RESTful services*.
 
@@ -18,7 +18,7 @@ The *Service Layer* communicates with repositories, which handle database intera
 
 ---
 
-## 🔄 Section 2: Numbered Flow of Data and Control
+##  Numbered Flow of Data and Control
 
 1. *User Interaction*  
    The user accesses the system through either:
