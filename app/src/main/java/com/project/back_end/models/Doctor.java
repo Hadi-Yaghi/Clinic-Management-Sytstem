@@ -1,5 +1,15 @@
 package com.project.back_end.models;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+import java.util.List;
+
+@Entity
 public class Doctor {
 
 // @Entity annotation:
@@ -60,6 +70,82 @@ public class Doctor {
 
 // 8. Getters and Setters:
 //    - Standard getter and setter methods are provided for all fields: id, name, specialty, email, password, phone, and availableTimes.
+    @Id
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
+    private Long Id;
+    @NotNull
+    @Size(min=3 ,max =100)
+    private String name;
+    @NotNull
+    @Size(min=3, max=100)
+    private String speciality;
+    @NotNull
+    @Email
+    private String email;
+    @NotNull
+    @Size(min=6)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String  password;
+    @NotNull
+    @Pattern(regexp = "^[0-9]{10}$")
+    private String phone;
+    @ElementCollection
+    private List<String> availableTime;
 
+    public Long getId() {
+        return Id;
+    }
+
+    public void setId(Long id) {
+        Id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getSpeciality() {
+        return speciality;
+    }
+
+    public void setSpeciality(String speciality) {
+        this.speciality = speciality;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public List<String> getAvailableTime() {
+        return availableTime;
+    }
+
+    public void setAvailableTime(List<String> availableTime) {
+        this.availableTime = availableTime;
+    }
 }
 
