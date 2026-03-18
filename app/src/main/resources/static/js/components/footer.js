@@ -102,3 +102,59 @@
   Call the renderFooter function to populate the footer in the page
 
 */
+/*
+  Function to render the footer content into the page
+      Select the footer element from the DOM
+      Set the inner HTML of the footer element to include the footer content
+
+  This section dynamically generates the footer content for the web page,
+  including the hospital's logo, copyright information,
+  and various helpful links.
+*/
+
+export function renderFooter() {
+    const footer = document.getElementById("footer");
+
+    if (!footer) return;
+
+    footer.innerHTML = `
+        <footer class="footer">
+            <div class="footer-container">
+                <div class="footer-logo">
+                    <img src="../assets/images/logo/logo.png" alt="Hospital CMS Logo">
+                    <p>© Copyright 2025. All Rights Reserved by Hospital CMS.</p>
+                </div>
+
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <a href="#">About</a>
+                        <a href="#">Careers</a>
+                        <a href="#">Press</a>
+                    </div>
+
+                    <div class="footer-column">
+                        <h4>Support</h4>
+                        <a href="#">Account</a>
+                        <a href="#">Help Center</a>
+                        <a href="#">Contact Us</a>
+                    </div>
+
+                    <div class="footer-column">
+                        <h4>Legals</h4>
+                        <a href="#">Terms & Conditions</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Licensing</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    `;
+}
+
+/*
+  Call the renderFooter function to populate the footer in the page
+*/
+document.addEventListener("DOMContentLoaded", () => {
+    renderFooter();
+});

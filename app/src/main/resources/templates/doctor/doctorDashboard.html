@@ -99,3 +99,50 @@ This file defines the Doctor Dashboard interface, allowing doctors to view and m
 
     * Properly close the `<body>` and `<html>` tags to complete the document.
  -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Select Role</title>
+    <link rel="icon" type="image/png" href="../assets/images/logo/Logo.png" />
+
+    <link rel="stylesheet" href="../assets/css/index.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+
+    <script src="../js/util.js" defer></script>
+    <script src="../js/render.js" defer></script>
+    <script src="../js/components/header.js" defer></script>
+    <script src="../js/components/footer.js" defer></script>
+    <script type="module" src="../js/index.js" defer></script>
+</head>
+<body onload="renderContent()">
+    <div class="container">
+        <div class="wrapper">
+            <div id="header"></div>
+
+            <main class="main-content">
+                <section class="role-selection">
+                    <h1>Select Your Role</h1>
+
+                    <div class="role-buttons">
+                        <button id="adminBtn" type="button">Admin</button>
+                        <button id="patientBtn" type="button">Patient</button>
+                        <button id="doctorBtn" type="button">Doctor</button>
+                    </div>
+                </section>
+            </main>
+
+            <div id="footer"></div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+</body>
+</html>
