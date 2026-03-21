@@ -51,167 +51,176 @@
 
    Catch any other errors, alert the user, and return a default empty result
 */
-import { openModal } from "./util.js";
-import { API_BASE_URL } from "./config.js";
+import { API_BASE_URL } from "../config/config.js";
 
-const ADMIN_API = `${API_BASE_URL}/admin/login`;
-const DOCTOR_API = `${API_BASE_URL}/doctor/login`;
+const DOCTOR_API = `${API_BASE_URL}/doctor`;
 
-/*
-  Use DOMContentLoaded to ensure DOM elements are available after page load
-  Inside this function:
-    - Select the "adminLogin" and "doctorLogin" buttons using getElementById
-    - If the admin login button exists:
-        - Add a click event listener that calls openModal('adminLogin') to show the admin login modal
-    - If the doctor login button exists:
-        - Add a click event listener that calls openModal('doctorLogin') to show the doctor login modal
-*/
-document.addEventListener("DOMContentLoaded", () => {
-    const adminLoginBtn = document.getElementById("adminLogin");
-    const doctorLoginBtn = document.getElementById("doctorLogin");
+function normalizeDoctor(doctor = {}) {
+  return {
+    ...doctor,
+    speciality: doctor.speciality || doctor.specialty || doctor.specialization || "",
+    specialty: doctor.speciality || doctor.specialty || doctor.specialization || "",
+    availableTime: doctor.availableTime || doctor.availableTimes || [],
+    availableTimes: doctor.availableTimes || doctor.availableTime || []
+  };
+}
 
-    if (adminLoginBtn) {
-        adminLoginBtn.addEventListener("click", () => {
-            openModal("adminLogin");
-        });
+function matchesAmPm(doctor, period) {
+  if (!period || period === "null") return true;
+  const slots = Array.isArray(doctor.availableTimes)
+    ? doctor.availableTimes
+    : Array.isArray(doctor.availableTime)
+      ? doctor.availableTime
+      : [];
+
+  return slots.some((slot) => {
+    const start = String(slot).split("-")[0]?.trim();
+    if (!start || !start.includes(":")) return false;
+    const hour = Number(start.split(":")[0]);
+    if (Number.isNaN(hour)) return false;
+    if (period.toUpperCase() === "AM") return hour < 12;
+    if (period.toUpperCase() === "PM") return hour >= 12;
+    return false;
+  });
+}
+
+function filterDoctorsLocally(doctors, name, time, specialty) {
+  const normalizedName = !name || name === "null" ? "" : name.toLowerCase();
+  const normalizedSpecialty = !specialty || specialty === "null" ? "" : specialty.toLowerCase();
+  const normalizedTime = !time || time === "null" ? null : time;
+
+  return doctors.filter((doctor) => {
+    const doctorName = String(doctor.name || "").toLowerCase();
+    const doctorSpecialty = String(doctor.speciality || doctor.specialty || doctor.specialization || "").toLowerCase();
+
+    const nameMatch = !normalizedName || doctorName.includes(normalizedName);
+    const specialtyMatch = !normalizedSpecialty || doctorSpecialty.includes(normalizedSpecialty);
+    const timeMatch = matchesAmPm(doctor, normalizedTime);
+
+    return nameMatch && specialtyMatch && timeMatch;
+  });
+}
+
+export async function getDoctors() {
+  try {
+    const response = await fetch(DOCTOR_API, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      console.error("Failed to fetch doctors:", response.statusText);
+      return [];
     }
 
-    if (doctorLoginBtn) {
-        doctorLoginBtn.addEventListener("click", () => {
-            openModal("doctorLogin");
-        });
-    }
-});
+    const data = await response.json();
+    const doctors = data.doctors || data.Doctors || data.Doctor || [];
+    return doctors.map(normalizeDoctor);
+  } catch (error) {
+    console.error("Error while fetching doctors:", error);
+    return [];
+  }
+}
 
-/*
-  Define a function named adminLoginHandler on the global window object
-  This function will be triggered when the admin submits their login credentials
+export async function deleteDoctor(id, token) {
+  try {
+    const response = await fetch(`${DOCTOR_API}/${id}/${token}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
 
-  Step 1: Get the entered username and password from the input fields
-  Step 2: Create an admin object with these credentials
+    const data = await response.json();
+    return {
+      success: response.ok,
+      message: data.message || "Something went wrong"
+    };
+  } catch (error) {
+    console.error("Error while deleting doctor:", error);
+    return {
+      success: false,
+      message: "Network error. Please try again later."
+    };
+  }
+}
 
-  Step 3: Use fetch() to send a POST request to the ADMIN_API endpoint
-    - Set method to POST
-    - Add headers with 'Content-Type: application/json'
-    - Convert the admin object to JSON and send in the body
-
-  Step 4: If the response is successful:
-    - Parse the JSON response to get the token
-    - Store the token in localStorage
-    - Redirect to the admin dashboard
-
-  Step 5: If login fails or credentials are invalid:
-    - Show an alert with an error message
-
-  Step 6: Wrap everything in a try-catch to handle network or server errors
-    - Show a generic error message if something goes wrong
-*/
-window.adminLoginHandler = async function () {
-    const username = document.getElementById("adminUsername")?.value.trim();
-    const password = document.getElementById("adminPassword")?.value.trim();
-
-    if (!username || !password) {
-        alert("Please enter both username and password.");
-        return;
-    }
-
-    const admin = {
-        username,
-        password
+export async function saveDoctor(doctor, token) {
+  try {
+    const payload = {
+      name: doctor.name,
+      speciality: doctor.speciality || doctor.specialty,
+      email: doctor.email,
+      password: doctor.password,
+      phone: doctor.phone,
+      availableTime: doctor.availableTime || doctor.availableTimes || []
     };
 
+    const response = await fetch(`${DOCTOR_API}/${token}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    let data = {};
     try {
-        const response = await fetch(ADMIN_API, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(admin)
-        });
-
-        if (!response.ok) {
-            alert("Invalid admin credentials. Please try again.");
-            return;
-        }
-
-        const data = await response.json();
-
-        if (!data.token) {
-            alert("Login failed. No token received.");
-            return;
-        }
-
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", "admin");
-        window.location.href = "adminDashboard.html";
-    } catch (error) {
-        console.error("Admin login error:", error);
-        alert("Something went wrong during admin login. Please try again later.");
-    }
-};
-
-/*
-  Define a function named doctorLoginHandler on the global window object
-  This function will be triggered when a doctor submits their login credentials
-
-  Step 1: Get the entered email and password from the input fields
-  Step 2: Create a doctor object with these credentials
-
-  Step 3: Use fetch() to send a POST request to the DOCTOR_API endpoint
-    - Include headers and request body similar to admin login
-
-  Step 4: If login is successful:
-    - Parse the JSON response to get the token
-    - Store the token in localStorage
-    - Redirect to the doctor dashboard
-
-  Step 5: If login fails:
-    - Show an alert for invalid credentials
-
-  Step 6: Wrap in a try-catch block to handle errors gracefully
-    - Log the error to the console
-    - Show a generic error message
-*/
-window.doctorLoginHandler = async function () {
-    const email = document.getElementById("doctorEmail")?.value.trim();
-    const password = document.getElementById("doctorPassword")?.value.trim();
-
-    if (!email || !password) {
-        alert("Please enter both email and password.");
-        return;
+      data = await response.json();
+    } catch {
+      data = {};
     }
 
-    const doctor = {
-        email,
-        password
+    const message = data.message || `Request failed with status ${response.status}`;
+
+    return {
+      success: response.ok,
+      message
     };
+  } catch (error) {
+    console.error("Error while saving doctor:", error);
+    return {
+      success: false,
+      message: "Network error. Please try again later."
+    };
+  }
+}
 
-    try {
-        const response = await fetch(DOCTOR_API, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(doctor)
-        });
+export async function filterDoctors(name, time, specialty) {
+  const parsedName = !name || name === "null" ? "null" : name;
+  const parsedTime = !time || time === "null" ? "null" : time;
+  const parsedSpecialty = !specialty || specialty === "null" ? "null" : specialty;
 
-        if (!response.ok) {
-            alert("Invalid doctor credentials. Please try again.");
-            return;
+  try {
+    const response = await fetch(
+      `${DOCTOR_API}/filter/${encodeURIComponent(parsedName)}/${encodeURIComponent(parsedTime)}/${encodeURIComponent(parsedSpecialty)}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
         }
+      }
+    );
 
-        const data = await response.json();
-
-        if (!data.token) {
-            alert("Login failed. No token received.");
-            return;
-        }
-
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("role", "doctor");
-        window.location.href = "doctorDashboard.html";
-    } catch (error) {
-        console.error("Doctor login error:", error);
-        alert("Something went wrong during doctor login. Please try again later.");
+    if (!response.ok) {
+      console.error("Failed to filter doctors:", response.statusText);
+      return { doctors: [] };
     }
-};
+
+    const data = await response.json();
+    const doctors = (data.doctors || data.Doctors || data.Doctor || []).map(normalizeDoctor);
+
+    if (doctors.length > 0 || (parsedName === "null" && parsedTime === "null" && parsedSpecialty === "null")) {
+      return { doctors };
+    }
+
+    const allDoctors = await getDoctors();
+    return { doctors: filterDoctorsLocally(allDoctors, parsedName, parsedTime, parsedSpecialty) };
+  } catch (error) {
+    console.error("Error while filtering doctors:", error);
+    const allDoctors = await getDoctors();
+    return { doctors: filterDoctorsLocally(allDoctors, parsedName, parsedTime, parsedSpecialty) };
+  }
+}

@@ -1,5 +1,17 @@
 package com.project.back_end.services;
 
+import com.project.back_end.models.Prescription;
+import com.project.back_end.repo.PrescriptionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
 public class PrescriptionService {
     
  // 1. **Add @Service Annotation**:
@@ -11,20 +23,54 @@ public class PrescriptionService {
 //    - The `PrescriptionService` class depends on the `PrescriptionRepository` to interact with the database.
 //    - It is injected through the constructor, ensuring proper dependency management and enabling testing.
 //    - Instruction: Constructor injection is a good practice, ensuring that all necessary dependencies are available at the time of service initialization.
-
+private PrescriptionRepository prescriptionRepository;
+@Autowired
+    public PrescriptionService(PrescriptionRepository prescriptionRepository) {
+        this.prescriptionRepository = prescriptionRepository;
+    }
 // 3. **savePrescription Method**:
 //    - This method saves a new prescription to the database.
 //    - Before saving, it checks if a prescription already exists for the same appointment (using the appointment ID).
 //    - If a prescription exists, it returns a `400 Bad Request` with a message stating the prescription already exists.
 //    - If no prescription exists, it saves the new prescription and returns a `201 Created` status with a success message.
 //    - Instruction: Handle errors by providing appropriate status codes and messages, ensuring that multiple prescriptions for the same appointment are not saved.
+public ResponseEntity<Map<String,String>> savePrescreption(Prescription prescription){
+        Map<String,String> response = new HashMap<>();
+        try {
+            if(prescription ==null){
+                response.put("message","No prescreption found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            prescriptionRepository.save(prescription);
+            response.put("message","prescreption Saved Successfully");
+            return ResponseEntity.status(HttpStatus.OK).body(response);
 
+        }catch (Exception e){
+            response.put("message","An error occured");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+}
 // 4. **getPrescription Method**:
 //    - Retrieves a prescription associated with a specific appointment based on the `appointmentId`.
 //    - If a prescription is found, it returns it within a map wrapped in a `200 OK` status.
 //    - If there is an error while fetching the prescription, it logs the error and returns a `500 Internal Server Error` status with an error message.
 //    - Instruction: Ensure that this method handles edge cases, such as no prescriptions found for the given appointment, by returning meaningful responses.
+public ResponseEntity<Map<String,Object>> getPrescription (Long appointmentId){
+        Map<String,Object> re   = new HashMap<>();
+        try {
+            List<Prescription> prescriptionList = prescriptionRepository.findByAppointmentId(appointmentId);
+            if (prescriptionList == null || prescriptionList.isEmpty()){
+                re.put("message","prescreption not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(re);
+            }
+            re.put("prescription",prescriptionList);
+            return ResponseEntity.status(HttpStatus.OK).body(re);
 
+        }catch (Exception E){
+            re.put("message" , "An error occured");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(re);
+        }
+}
 // 5. **Exception Handling and Error Responses**:
 //    - Both methods (`savePrescription` and `getPrescription`) contain try-catch blocks to handle exceptions that may occur during database interaction.
 //    - If an error occurs, the method logs the error and returns an HTTP `500 Internal Server Error` response with a corresponding error message.

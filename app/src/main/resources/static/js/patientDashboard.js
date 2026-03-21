@@ -9,6 +9,11 @@ import { patientSignup, patientLogin } from './services/patientServices.js';
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDoctorCards();
+
+  const loginType = new URLSearchParams(window.location.search).get("login");
+  if (loginType === "patient") {
+    openModal("patientLogin");
+  }
 });
 
 document.addEventListener("DOMContentLoaded", () => {

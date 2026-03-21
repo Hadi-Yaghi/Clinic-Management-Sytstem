@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const token = localStorage.getItem("token");
   const patientName = urlParams.get("patientName")
 
+  if (!token) {
+    alert("Session expired. Please log in again.");
+    window.location.href = "/index.html?login=doctor";
+    return;
+  }
+
   if (heading) {
     if (mode === "view") {
       heading.innerHTML = `View <span>Prescription</span>`;
@@ -36,9 +42,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log("getPrescription :: ", response);
 
       // Now, check if the prescription exists in the response and access it from the array
-      if (response.prescription && response.prescription.length > 0) {
-        const existingPrescription = response.prescription[0]; // Access first prescription object
-        patientNameInput.value = existingPrescription.patientName || YOU;
+      const prescriptions = response.prescription || response.appointments || [];
+      if (prescriptions.length > 0) {
+        const existingPrescription = prescriptions[0]; // Access first prescription object
+        patientNameInput.value = existingPrescription.patientName || "";
         medicinesInput.value = existingPrescription.medication || "";
         dosageInput.value = existingPrescription.dosage || "";
         notesInput.value = existingPrescription.doctorNotes || "";
@@ -60,11 +67,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   savePrescriptionBtn.addEventListener('click', async (e) => {
     e.preventDefault();
 
+    if (!appointmentId) {
+      alert("Invalid appointment details.");
+      return;
+    }
+
+    if (!patientNameInput.value.trim() || !medicinesInput.value.trim() || !dosageInput.value.trim()) {
+      alert("Please fill patient name, medicines, and dosage.");
+      return;
+    }
+
     const prescription = {
-      patientName: patientNameInput.value,
-      medication: medicinesInput.value,
-      dosage: dosageInput.value,
-      doctorNotes: notesInput.value,
+      patientName: patientNameInput.value.trim(),
+      medication: medicinesInput.value.trim(),
+      dosage: dosageInput.value.trim(),
+      doctorNotes: notesInput.value.trim(),
       appointmentId
     };
 

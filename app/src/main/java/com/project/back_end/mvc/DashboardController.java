@@ -19,7 +19,8 @@ public class DashboardController {
 // 2. Autowire the Shared Service:
 //    - Inject the common `Service` class, which provides the token validation logic used to authorize access to dashboards.
 @Autowired
-    Service service = new Service();
+    private TokenService service ;
+
 
 // 3. Define the `adminDashboard` Method:
 //    - Handles HTTP GET requests to `/adminDashboard/{token}`.
@@ -30,14 +31,14 @@ public class DashboardController {
 @GetMapping("/adminDashboard/{token}")
 public String adminDashboard(@PathVariable String token) {
 
-    Map<String, String> errors = service.validateToken(token, "admin");
+    boolean isValid = service.validateToken(token, "admin");
 
-    // If map is empty → valid token
-    if (errors.isEmpty()) {
+    // If isValid is true → valid token
+    if (isValid) {
         return "admin/adminDashboard";
     }
 
-    // If not empty → invalid token → redirect to login
+    // If false → invalid token → redirect to Login
     return "redirect:/";
 }
 
@@ -49,11 +50,15 @@ public String adminDashboard(@PathVariable String token) {
 //    - If the token is valid, forwards the user to the `"doctor/doctorDashboard"` view.
 //    - If the token is invalid, redirects to the root URL.
 @GetMapping("/doctorDashboard/{token}")
-public String doctorDashboard(@PathVariable String token){
-    Map<String,String> errors = service.validateToken(token,"doctor");
-    if(errors.isEmpty()){
+public String doctorDashboard(@PathVariable String token) {
+    // validateToken returns a boolean, not a Map
+    boolean isValid = service.validateToken(token, "doctor");
+
+    if (isValid) {
         return "doctor/doctorDashboard";
     }
+
+    // If the token is invalid, redirect to root
     return "redirect:/";
 }
 

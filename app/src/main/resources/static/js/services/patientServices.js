@@ -59,9 +59,8 @@ export async function getPatientAppointments(id, token, user) {
   try {
     const response = await fetch(`${PATIENT_API}/${id}/${user}/${token}`);
     const data = await response.json();
-    console.log(data.appointments)
     if (response.ok) {
-      return data.appointments;
+      return data.appointments || data.Appointments || [];
     }
     return null;
   }
@@ -73,7 +72,10 @@ export async function getPatientAppointments(id, token, user) {
 
 export async function filterAppointments(condition, name, token) {
   try {
-    const response = await fetch(`${PATIENT_API}/filter/${condition}/${name}/${token}`, {
+    const parsedCondition = condition || "null";
+    const parsedName = name || "null";
+
+    const response = await fetch(`${PATIENT_API}/filter/${parsedCondition}/${parsedName}/${token}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -82,7 +84,7 @@ export async function filterAppointments(condition, name, token) {
 
     if (response.ok) {
       const data = await response.json();
-      return data;
+      return { appointments: data.appointments || data.Appointments || [] };
 
     } else {
       console.error("Failed to fetch doctors:", response.statusText);

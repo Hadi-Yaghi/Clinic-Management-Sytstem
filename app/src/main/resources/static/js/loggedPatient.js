@@ -4,10 +4,13 @@ import { createDoctorCard } from './components/doctorCard.js';
 import { filterDoctors } from './services/doctorServices.js';
 import { bookAppointment } from './services/appointmentRecordService.js';
 
+const isLoggedPatientPage = window.location.pathname.includes("loggedPatientDashboard.html");
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadDoctorCards();
-});
+if (isLoggedPatientPage) {
+  document.addEventListener("DOMContentLoaded", () => {
+    loadDoctorCards();
+  });
+}
 
 function loadDoctorCards() {
   getDoctors()
@@ -41,16 +44,23 @@ export function showBookingOverlay(e, doctor, patient) {
   const modalApp = document.createElement("div");
   modalApp.classList.add("modalApp");
 
+  const doctorSpecialization = doctor.speciality || doctor.specialty || doctor.specialization || "N/A";
+  const availableTimes = Array.isArray(doctor.availableTimes)
+    ? doctor.availableTimes
+    : Array.isArray(doctor.availableTime)
+      ? doctor.availableTime
+      : [];
+
   modalApp.innerHTML = `
     <h2>Book Appointment</h2>
     <input class="input-field" type="text" value="${patient.name}" disabled />
     <input class="input-field" type="text" value="${doctor.name}" disabled />
-    <input class="input-field" type="text" value="${doctor.specialty}" disabled/>
+    <input class="input-field" type="text" value="${doctorSpecialization}" disabled/>
     <input class="input-field" type="email" value="${doctor.email}" disabled/>
     <input class="input-field" type="date" id="appointment-date" />
     <select class="input-field" id="appointment-time">
       <option value="">Select time</option>
-      ${doctor.availableTimes.map(t => `<option value="${t}">${t}</option>`).join('')}
+      ${availableTimes.map(t => `<option value="${t}">${t}</option>`).join('')}
     </select>
     <button class="confirm-booking">Confirm Booking</button>
   `;
@@ -87,9 +97,15 @@ export function showBookingOverlay(e, doctor, patient) {
 
 
 // Filter Input
-document.getElementById("searchBar").addEventListener("input", filterDoctorsOnChange);
-document.getElementById("filterTime").addEventListener("change", filterDoctorsOnChange);
-document.getElementById("filterSpecialty").addEventListener("change", filterDoctorsOnChange);
+if (isLoggedPatientPage) {
+  const searchBarEl = document.getElementById("searchBar");
+  const filterTimeEl = document.getElementById("filterTime");
+  const filterSpecialtyEl = document.getElementById("filterSpecialty");
+
+  searchBarEl?.addEventListener("input", filterDoctorsOnChange);
+  filterTimeEl?.addEventListener("change", filterDoctorsOnChange);
+  filterSpecialtyEl?.addEventListener("change", filterDoctorsOnChange);
+}
 
 
 
